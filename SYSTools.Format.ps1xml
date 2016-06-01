@@ -1,0 +1,163 @@
+﻿<?xml version="1.0" encoding="utf-8" ?>
+
+<Configuration>
+    <ViewDefinitions>
+
+        <View>
+            <Name>SystemDetails</Name>
+            <ViewSelectedBy>
+                <TypeName>SDHB.systools.SystemDetails</TypeName>
+            </ViewSelectedBy>
+
+            <TableControl>
+                <TableHeaders>
+                    <TableColumnHeader>
+                        <Label>Computer Name</Label>
+                        <Width>16</Width>
+                        <Alignment>left</Alignment>
+                    </TableColumnHeader>
+                    <TableColumnHeader>
+                        <Label>Manufacturer</Label>
+                        <Width>15</Width>
+                        <Alignment>left</Alignment>
+                    </TableColumnHeader>
+                    <TableColumnHeader>
+                        <Label>Model</Label>
+                        <Width>20</Width>
+                        <Alignment>left</Alignment>
+                    </TableColumnHeader>
+                    <TableColumnHeader>
+                        <Label>OS Ver</Label>
+                        <Width>9</Width>
+                        <Alignment>left</Alignment>
+                    </TableColumnHeader>
+                    <TableColumnHeader>
+                        <Label>Install Date</Label>
+                        <Width>12</Width>
+                        <Alignment>right</Alignment>
+                    </TableColumnHeader>
+                    <TableColumnHeader>
+                        <Label>Arch</Label>
+                        <Width>7</Width>
+                        <Alignment>right</Alignment>
+                    </TableColumnHeader>
+                    <TableColumnHeader>
+                        <Label>RAM (G)</Label>
+                        <Width>7</Width>
+                        <Alignment>right</Alignment>
+                    </TableColumnHeader>
+                    <TableColumnHeader>
+                        <Label>Processors</Label>
+                        <Width>10</Width>
+                        <Alignment>right</Alignment>
+                    </TableColumnHeader>
+                    <TableColumnHeader>
+                        <Label>Loggedon</Label>
+                        <Width>17</Width>
+                        <Alignment>left</Alignment>
+                    </TableColumnHeader>
+                    
+                </TableHeaders>
+                <TableRowEntries>
+                    <TableRowEntry>
+                        <TableColumnItems>
+                            <TableColumnItem>
+                                <PropertyName>ComputerName</PropertyName>
+                            </TableColumnItem>
+                            <TableColumnItem>
+                                <PropertyName>Manufacturer</PropertyName>
+                            </TableColumnItem>
+                            <TableColumnItem>
+                                <PropertyName>Model</PropertyName>
+                            </TableColumnItem>
+                            
+                            <TableColumnItem>
+                                <PropertyName>OSVersion</PropertyName>
+                            </TableColumnItem>
+                    
+                            <TableColumnItem>
+                                <PropertyName>InstallDate</PropertyName>
+                                <FormatString>{0:dd} {0:MMM} {0:yyyy}</FormatString>
+                            </TableColumnItem>
+                            <TableColumnItem>
+                                <PropertyName>Architechture</PropertyName>
+                            </TableColumnItem>
+                            <TableColumnItem>
+                                <ScriptBlock>
+                                    if($_.RAM -ne $null) {[int]($_.RAM /1GB)}
+                                </ScriptBlock>
+                            </TableColumnItem>
+                            <TableColumnItem>
+                                <PropertyName>Processors</PropertyName>
+                            </TableColumnItem>
+                            <TableColumnItem>
+                                <PropertyName>UserName</PropertyName>
+                            </TableColumnItem>
+                        </TableColumnItems>
+                    </TableRowEntry>
+                </TableRowEntries>
+            </TableControl>
+        </View>
+        
+        <View>
+            <Name>DiskDetails</Name>
+            <ViewSelectedBy>
+                <TypeName>SDHB.systools.diskdetails</TypeName>
+            </ViewSelectedBy>
+
+                        <TableControl>
+                <TableHeaders>
+                    <TableColumnHeader>
+                        <Label>Computer Name</Label>
+                        <Width>16</Width>
+                        <Alignment>left</Alignment>
+                    </TableColumnHeader>
+                    <TableColumnHeader>
+                        <Label>Drive</Label>
+                        <Width>8</Width>
+                        <Alignment>left</Alignment>
+                    </TableColumnHeader>
+                    <TableColumnHeader>
+                        <Label>Size (G)</Label>
+                        <Width>10</Width>
+                        <Alignment>right</Alignment>
+                    </TableColumnHeader>
+                    <TableColumnHeader>
+                        <Label>Free (G)</Label>
+                        <Width>10</Width>
+                        <Alignment>right</Alignment>
+                    </TableColumnHeader>
+                    <TableColumnHeader>
+                        <Label>Free %</Label>
+                        <Width>10</Width>
+                        <Alignment>right</Alignment>
+                    </TableColumnHeader>
+                    
+                </TableHeaders>
+                <TableRowEntries>
+                    <TableRowEntry>
+                        <TableColumnItems>
+                            <TableColumnItem>
+                                <PropertyName>ComputerName</PropertyName>
+                            </TableColumnItem>
+                            <TableColumnItem>
+                                <PropertyName>Drive</PropertyName>
+                            </TableColumnItem>
+                            <TableColumnItem>
+                                <ScriptBlock>[int]($_.Size / 1GB)</ScriptBlock>
+                            </TableColumnItem>
+                            <TableColumnItem>
+                                <ScriptBlock>[int]($_.FreeSpace / 1GB)</ScriptBlock>
+                            </TableColumnItem>
+                            <TableColumnItem>
+                                <PropertyName>FreePercent</PropertyName>
+                            </TableColumnItem>
+
+                        </TableColumnItems>
+                    </TableRowEntry>
+                </TableRowEntries>
+            </TableControl>
+        </View>
+
+    </ViewDefinitions>
+</Configuration>
