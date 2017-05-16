@@ -317,7 +317,7 @@ function Get-OfficeVersion {
     String
 
 .OUTPUTS
-   TypeName: SDHB.systools.OfficeVersion
+   TypeName: daveb.systools.OfficeVersion
 
 Name         MemberType   Definition
 ----         ----------   ----------
@@ -387,7 +387,7 @@ Param ([Parameter (
                           }
         
                 $obj = New-Object -TypeName PSObject -Property $prop
-                $obj.psobject.typenames.insert(0, 'SDHB.systools.OfficeVersion')
+                $obj.psobject.typenames.insert(0, 'daveb.systools.OfficeVersion')
         
                 Write-Output $obj    
             } #foreach in $SoftwareList
@@ -529,7 +529,7 @@ Param ([Parameter (
              }
 
             $obj = New-Object -TypeName PSObject -Property $prop
-            $obj.psobject.typenames.insert(0, 'SDHB.systools.SystemDetails')
+            $obj.psobject.typenames.insert(0, 'daveb.systools.SystemDetails')
             Write-Output $obj
         } # foreach in CopmuterName
     } #process
@@ -553,7 +553,7 @@ Function Get-DiskDetails {
     Object with property named "ComputerName" - due to ValueFromPipelineByPropertyName
 
 .OUTPUTS
-    TypeName: SDHB.systools.diskdetails
+    TypeName: daveb.systools.diskdetails
 
 Name         MemberType   Definition                       
 ----         ----------   ----------                       
@@ -621,7 +621,7 @@ Param ([Parameter (
                                 "FreePercent" = $Freepc
                               } #prop
                 $obj = New-Object -TypeName PSObject -Property $prop
-                $obj.psobject.typenames.insert(0, 'SDHB.systools.diskdetails')
+                $obj.psobject.typenames.insert(0, 'daveb.systools.diskdetails')
                 Write-Output $obj
                 } #foreach drive
             } else {
@@ -634,7 +634,7 @@ Param ([Parameter (
                 
                 } #prop
                 $obj = New-Object -TypeName PSObject -Property $prop
-                $obj.psobject.typenames.insert(0, 'SDHB.systools.diskdetails')
+                $obj.psobject.typenames.insert(0, 'daveb.systools.diskdetails')
                 Write-Output $obj
             } #if test-connection
             
@@ -666,7 +666,7 @@ function Get-AutoStopped {
 .OUTPUTS
 
 
-   TypeName: SDHB.systools.process
+   TypeName: daveb.systools.process
 
 Name         MemberType   Definition
 ----         ----------   ----------
@@ -739,7 +739,7 @@ swi_update                         1077 Auto      DNVIWEB02    Stopped OK
                           }
         
                 $obj = New-Object -TypeName PSObject -Property $prop
-                $obj.psobject.typenames.insert(0, 'SDHB.systools.process')
+                $obj.psobject.typenames.insert(0, 'daveb.systools.process')
                 Write-Output $obj
             } # foreach $Proc
             remove-cimsession $CS
@@ -908,7 +908,7 @@ PC121212                                Microsoft Office Proof (French) 2007    
         }
 
         $obj = New-Object -TypeName PSObject -Property $prop
-        $obj.psobject.typenames.insert(0, 'sdhb.systools.software')
+        $obj.psobject.typenames.insert(0, 'daveb.systools.software')
         Write-Output $obj
         }
     }
@@ -932,7 +932,7 @@ function Get-AVProduct {
     The computer name(s) to retrieve the info from.  
 
 .PARAMETER FileName
-    A CSV file with a column headed "Computername". If the file is just a list of computernames - it must still have the first line headed "computername".
+    Either a plain text list of computernames or a CSV file with a column headed "Computername".
   
 .EXAMPLE 
     Get-AVProduct 
@@ -941,10 +941,14 @@ function Get-AVProduct {
 .EXAMPLE
     Get-AVProduct -FileName c:\temp\computers.csv
 
-    The file MUST have a field headed "Computername". A progress bar appears while the file is processed.
+     A progress bar appears while the file is processed. If the file is CSV then it must have a field named "computername". 
+     If it's not a CSV (or if the the first line is not just :computername") then the file is loaded with the asumption it is a list of computernames
 
 .EXAMPLE
-    gc 'c:\temp\computers.txt' | Get-AVProduct | select ComputerName,OS,CountProdsInstalled,AVProductName,ProductExecutable,versionNumber,DefinitionStatus,RealTimeProtectionStatus,QueryStatus | Export-Csv 'f:\reports\AVreport.csv' -NoTypeInformation
+    gc 'c:\temp\computers.txt' | 
+        Get-AVProduct | 
+        select ComputerName,OS,CountProdsInstalled,AVProductName,ProductExecutable,versionNumber,DefinitionStatus,RealTimeProtectionStatus,QueryStatus,DateTime |
+        Export-Csv 'f:\reports\AVreport.csv' -NoTypeInformation
     
     Tests all of the computers in the text file and outputs a csv file
 
@@ -963,6 +967,7 @@ function Get-AVProduct {
     ProductExecutable:        Path to the executable - could be an array of objects unless converted to string with -stringout
     RealTimeProtectionStatus: Is real time protection active?
     versionNumber:            Version number if legacy OS
+    DateTime:                 The Date/Time the query ran
  
 .NOTES 
     WMI query to get anti-virus infor­ma­tion has been changed. 
@@ -1028,26 +1033,40 @@ BEGIN {
     Write-Verbose ("Set: {0}" -f $Set)
    
     
-    if ($set -eq "file") {
+   if ($set -eq "file") {
           Write-Verbose ("Filename: {0}" -f $FileName)
-          try {
-            $ComputerName = ((Import-Csv $FileName | Select computername).computername) -notmatch '^\s*$'
+          try { 
+
+            #first try to open as CSV, if it doesn't look like a csv file then try just importing as a 
+            if ((((([array](get-content $FileName))[0]) -split ",").count -gt 1) -or ( (gc C:\temp\compname-plain.txt -first 1) -eq 'computername' ) ) {
+                Write-Verbose "Loading CSV"
+                
+                    $ComputerName = ((Import-Csv $FileName | Select computername).computername) -notmatch '^\s*$'
+                    
+                
+             } else {
+                Write-Verbose "Loading plain text"
+                $ComputerName = (gc $FileName -notmatch '^\s*$')
+                }
           } catch {
-             throw ("File '{0}' is either empty or has no field headed 'ComputerName'" -f $filename)
+                throw ("File '{0}' looks empty" -f $filename)
+            
             exit
           }
 
-          if (!($ComputerName[0]) ) {
-            throw ("File '{0}' is either empty or has no field headed 'ComputerName'" -f $filename)
+          #ok this SHOULD be in the bit where we're loading csv but I couldn't get it to work there
+          if (($ComputerName).Count -eq 0) {
+            Throw ("File '{0}' looks like it is a csv without a heading of `"ComputerName`"" -f $filename )
             exit
-            }
-         } 
-     
+          }
+
+           
+     }
      
     $tot = ($computername | measure).count   
     Write-Verbose ("Total is {0}" -f $tot)
  
-} # end BEGIN 
+} # end BEGIN
  
 PROCESS { 
     
@@ -1086,7 +1105,8 @@ PROCESS {
                         versionNumber = $null; 
                         ProductExecutable = $null;  
                         DefinitionStatus = $null;
-                        RealTimeProtectionStatus = $null
+                        RealTimeProtectionStatus = $null;
+                        DateTime = Get-Date
                         } 
                 
                 $obj = New-Object -TypeName PSObject -Property $prop
@@ -1112,7 +1132,8 @@ PROCESS {
                                         versionNumber = $nullr; 
                                         ProductExecutable = $null;  
                                         DefinitionStatus = $null;
-                                        RealTimeProtectionStatus = $null
+                                        RealTimeProtectionStatus = $null;
+                                        DateTime = Get-Date
                                     }
                             $obj = New-Object -TypeName PSObject -Property $prop
                             $obj.psobject.typenames.insert(0, 'daveb.av')
@@ -1129,7 +1150,8 @@ PROCESS {
                                         versionNumber = $AVProd.versionNumber; 
                                         ProductExecutable = $null;  
                                         DefinitionStatus = $AVProd.productUptoDate;
-                                        RealTimeProtectionStatus = $AVProd.onAccessScanningEnabled
+                                        RealTimeProtectionStatus = $AVProd.onAccessScanningEnabled;
+                                        DateTime = Get-Date
                                             
                             }
                             $obj = New-Object -TypeName PSObject -Property $prop
@@ -1154,7 +1176,8 @@ PROCESS {
                                     versionNumber = $null; 
                                     ProductExecutable = $null;  
                                     DefinitionStatus = $null;
-                                    RealTimeProtectionStatus = $null
+                                    RealTimeProtectionStatus = $null;
+                                    DateTime = Get-Date
                         } 
                         
                         $obj = New-Object -TypeName PSObject -Property $prop
@@ -1180,7 +1203,8 @@ PROCESS {
                                         versionNumber = $null; 
                                         ProductExecutable = $null;  
                                         DefinitionStatus = $null;
-                                        RealTimeProtectionStatus = $null
+                                        RealTimeProtectionStatus = $null;
+                                        DateTime = Get-Date
                                     }
                            $obj = New-Object -TypeName PSObject -Property $prop
                            $obj.psobject.typenames.insert(0, 'daveb.av')
@@ -1236,7 +1260,8 @@ PROCESS {
                                 versionNumber = $null; 
                                 ProductExecutable = $AVProd.pathToSignedProductExe;;  
                                 DefinitionStatus = $defstatus;
-                                RealTimeProtectionStatus = $rtstatus
+                                RealTimeProtectionStatus = $rtstatus;
+                                DateTime = Get-Date
                                 }
                         $obj = New-Object -TypeName PSObject -Property $prop
                         $obj.psobject.typenames.insert(0, 'daveb.av')
@@ -1259,7 +1284,8 @@ PROCESS {
                             versionNumber = $null; 
                             ProductExecutable = $null;  
                             DefinitionStatus = $null;
-                            RealTimeProtectionStatus = $null
+                            RealTimeProtectionStatus = $null;
+                            DateTime = Get-Date
                         }
                     $obj = New-Object -TypeName PSObject -Property $prop
                     $obj.psobject.typenames.insert(0, 'daveb.av')
@@ -1277,7 +1303,8 @@ PROCESS {
                         versionNumber = $null; 
                         ProductExecutable = $null;  
                         DefinitionStatus = $null;
-                        RealTimeProtectionStatus = $null
+                        RealTimeProtectionStatus = $null;
+                        DateTime = Get-Date
                         } 
                 
                 $obj = New-Object -TypeName PSObject -Property $prop
@@ -1297,7 +1324,8 @@ PROCESS {
                     versionNumber = $null; 
                     ProductExecutable = $null;  
                     DefinitionStatus = $null;
-                    RealTimeProtectionStatus = $null
+                    RealTimeProtectionStatus = $null;
+                    DateTime = Get-Date
                  }
              
                             
@@ -1313,3 +1341,77 @@ PROCESS {
  
 END { Write-Verbose "Function Get-AVProduct finished." }  
 } # end function Get-AVProduct
+
+Function Get-TMServer {
+<#
+.SYNOPSIS
+
+
+.DESCRIPTION
+This is a simple Powershell script to find the Trend Micro server that a computer is talking too. This information is stored in the registry key on a machine
+
+.SYNTAX
+    get-TMServer
+
+.EXAMPLE
+
+Find the server
+    Get-TM Server -computer 'COMPUTERNAME' 
+
+Get all information stored in the key
+    Get-TM Server -computer 'COMPUTERNAME' -FullInfo
+
+.NOTES
+Limited error handling is intentional due to errors being one of three things. No key (custom error message), WMI error or permission error
+Autho: Owen Miller
+
+#>
+
+param(
+[parameter(mandatory=$true)] $Computer,
+[switch]$FullInfo
+)
+
+    if(Invoke-command -computer $Computer {test-path 'C:\Program Files (x86)'}){
+
+        try{
+            $RegInfo = Invoke-command -computer $Computer {Get-ItemProperty 'hklm:SOFTWARE\Wow6432Node\TrendMicro\PC-cillinNTCorp\CurrentVersion'}
+
+            if($fullinfo)
+            {
+                $RegInfo
+            }
+            else{
+                $RegInfo.Server.ToString()
+            }
+
+        }
+        Catch{       
+            write-warning 'x64 Registry key not found. Please confirm Trend Micro AV is installed on the machine'
+
+        }
+        
+    }
+
+    else{
+
+        try{
+            $RegInfo = Invoke-command -computer $Computer {Get-ItemProperty 'hklm:SOFTWARE\TrendMicro\PC-cillinNTCorp\CurrentVersion'}
+
+            if($fullinfo)
+            {
+                $RegInfo
+            }
+            else{
+                $RegInfo.Server.ToString()
+            }
+
+        }
+        catch{     
+            write-warning 'x86 Registry key not found. Please confirm Trend Micro AV is installed on the machine'    
+        
+        }
+
+    }  
+    
+}
