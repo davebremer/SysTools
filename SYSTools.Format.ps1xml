@@ -6,7 +6,7 @@
         <View>
             <Name>SystemDetails</Name>
             <ViewSelectedBy>
-                <TypeName>SDHB.systools.SystemDetails</TypeName>
+                <TypeName>DaveB.systools.SystemDetails</TypeName>
             </ViewSelectedBy>
 
             <TableControl>
@@ -102,7 +102,7 @@
         <View>
             <Name>DiskDetails</Name>
             <ViewSelectedBy>
-                <TypeName>SDHB.systools.diskdetails</TypeName>
+                <TypeName>DaveB.systools.diskdetails</TypeName>
             </ViewSelectedBy>
 
                         <TableControl>
